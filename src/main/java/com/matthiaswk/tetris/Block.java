@@ -5,10 +5,10 @@ import java.util.Random;
 
 @SuppressWarnings("serial")
 public class Block{
-	public Point coordinates;
-	public int dimension;
-	public Image image;
-	public BlockColor blockColor;
+	private Point coordinates;
+	private int dimension;
+	private Image image;
+	private BlockColor blockColor;
 
 	public enum BlockColor{
 		LIGHTBLUE, YELLOW, PINK, BLUE, ORANGE, GREEN, RED;
@@ -18,7 +18,7 @@ public class Block{
             return values()[random.nextInt(values().length)];
         }
 	}
-	
+
 	Block(Point coordinates, int dimension, BlockColor blockColor){
 		this.coordinates = coordinates;
 		this.dimension = dimension;
@@ -26,11 +26,19 @@ public class Block{
 		
 		loadImage();
 	}
-	
-	public void loadImage()
+
+	public Point getCoordinates(){
+		return coordinates;
+	}
+
+	public void setCoordinates(Point newCoords){
+		coordinates = newCoords;
+	}
+
+	private void loadImage()
 	{		
 		Toolkit t = Toolkit.getDefaultToolkit();
-		Image temp = null;
+		Image temp;
 		switch(blockColor) {
 			case LIGHTBLUE:
 				temp = t.getImage(getClass().getResource("/block_lightblue.png"));
@@ -58,7 +66,11 @@ public class Block{
 		}
 	    image = temp.getScaledInstance(dimension, dimension, Image.SCALE_DEFAULT);
 	}
-	
+
+	public void draw(Graphics g, GameField field){
+		g.drawImage(image, coordinates.x*dimension, coordinates.y*dimension, field);
+	}
+
 	public void moveDown() {
 		int x = coordinates.x;
 		int newY = coordinates.y + 1;

@@ -17,18 +17,18 @@ class BlockTest {
     @org.junit.jupiter.api.Test
     void moveDown() {
         block.moveDown();
-        assertEquals(new Point(0,1), block.coordinates);
+        assertEquals(new Point(0,1), block.getCoordinates());
     }
 
     @org.junit.jupiter.api.Test
     void moveRight() {
         block.moveRight();
-        assertEquals(new Point(1,0), block.coordinates);
+        assertEquals(new Point(1,0), block.getCoordinates());
     }
 
     @org.junit.jupiter.api.Test
     void moveLeft() {
         block.moveLeft();
-        assertEquals(new Point(-1,0), block.coordinates);
+        assertEquals(new Point(-1,0), block.getCoordinates());
     }
 }

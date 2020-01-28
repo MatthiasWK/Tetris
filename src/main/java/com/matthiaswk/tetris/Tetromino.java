@@ -4,10 +4,10 @@ import java.awt.*;
 import java.util.Random;
 
 public class Tetromino {
-    public Point coordinates;
-    public int dimension;
-    public TetrominoShape shape;
-    public Block[] blocks;
+    private Point coordinates;
+    private int dimension;
+    private TetrominoShape shape;
+    private Block[] blocks;
     private Point[] blockCoordinates;
     private Block.BlockColor blockColor;
     final private Point SpawnPoint = new Point(4,1);
@@ -35,6 +35,26 @@ public class Tetromino {
         blocks = new Block[4];
         shape = TetrominoShape.getRandomShape();
         buildTetromino();
+    }
+
+    Tetromino(int dimension, TetrominoShape shape){
+        coordinates = SpawnPoint;
+        this.dimension = dimension;
+        blocks = new Block[4];
+        this.shape = shape;
+        buildTetromino();
+    }
+
+    public Point getCoordinates(){
+        return coordinates;
+    }
+
+    public Block[] getBlocks(){
+        return blocks;
+    }
+
+    public Point[] getBlockCoordinates(){
+        return blockCoordinates;
     }
 
     Tetromino(int dimension, Point coordinates){
@@ -140,7 +160,7 @@ public class Tetromino {
         else {
             for(int i = 0; i < blocks.length; i++){
                 Block currentBlock = blocks[i];
-                currentBlock.coordinates = rotatedRightCoordinates(i);
+                currentBlock.setCoordinates(rotatedRightCoordinates(i));
             }
         }
     }
@@ -165,7 +185,7 @@ public class Tetromino {
         else {
             for(int i = 0; i < blocks.length; i++){
                 Block currentBlock = blocks[i];
-                currentBlock.coordinates = rotatedLeftCoordinates(i);
+                currentBlock.setCoordinates(rotatedLeftCoordinates(i));
             }
         }
     }

@@ -21,6 +21,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
     private boolean isPlaying;
 	private boolean isPaused;
 	private boolean isPressed;
+	private boolean isInteractive = true;
 	private final Object pauseLock = new Object();
     private Thread animator;
 	private Block currentBlock;
@@ -31,10 +32,9 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 		InitField();
 		spawnTetromino();
 	}
-	
+
 	private void InitField() {
 		setBackground(Color.LIGHT_GRAY);
-		//setOpaque(false);
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
 		lockedBlocks = new Block[10][20];
 		isPlaying = true;
@@ -60,8 +60,8 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}	
 	
 	private boolean canMoveDown() {
-		int x = currentBlock.coordinates.x;
-		int y = currentBlock.coordinates.y;
+		int x = currentBlock.getCoordinates().x;
+		int y = currentBlock.getCoordinates().y;
 		if(y < BORDER_DOWN && lockedBlocks[x][y+1] == null)
 			return true;
 		else
@@ -69,7 +69,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private boolean tetrominoCanMoveDown() {
-		for(Block block : currentTetromino.blocks){
+		for(Block block : currentTetromino.getBlocks()){
 			if(!canMoveDown(block))
 				return false;
 		}
@@ -77,7 +77,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private boolean tetrominoCanMoveRight() {
-		for(Block block : currentTetromino.blocks){
+		for(Block block : currentTetromino.getBlocks()){
 			if(!canMoveRight(block))
 				return false;
 		}
@@ -85,7 +85,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private boolean tetrominoCanMoveLeft() {
-		for(Block block : currentTetromino.blocks){
+		for(Block block : currentTetromino.getBlocks()){
 			if(!canMoveLeft(block))
 				return false;
 		}
@@ -93,8 +93,8 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private boolean canMoveDown(Block block) {
-		int x = block.coordinates.x;
-		int y = block.coordinates.y;
+		int x = block.getCoordinates().x;
+		int y = block.getCoordinates().y;
 		if(y < BORDER_DOWN && lockedBlocks[x][y+1] == null)
 			return true;
 		else
@@ -102,8 +102,8 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 	
 	private boolean canMoveRight(Block block) {
-		int x = block.coordinates.x;
-		int y = block.coordinates.y;
+		int x = block.getCoordinates().x;
+		int y = block.getCoordinates().y;
 		if(x < BORDER_LEFT || (x < BORDER_RIGHT && lockedBlocks[x+1][y] == null))
 			return true;
 		else
@@ -111,14 +111,14 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 	
 	private boolean canMoveLeft(Block block) {
-		int x = block.coordinates.x;
-		int y = block.coordinates.y;
+		int x = block.getCoordinates().x;
+		int y = block.getCoordinates().y;
 		if( x > BORDER_RIGHT || (x > BORDER_LEFT && lockedBlocks[x-1][y] == null))
 			return true;
 		else
 			return false;
 	}
-
+	//TODO change to test before rotating
 	private void tryRotatingTetrominoRight(){
 		currentTetromino.rotateRight();
 
@@ -152,6 +152,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 		}
 	}
 
+	//TODO change to test before rotating
 	private void tryRotatingTetrominoLeft(){
 		currentTetromino.rotateLeft();
 
@@ -186,8 +187,8 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private boolean tetrominoOutOfBoundsDown(){
-		for(Block block : currentTetromino.blocks){
-			int y = block.coordinates.y;
+		for(Block block : currentTetromino.getBlocks()){
+			int y = block.getCoordinates().y;
 			if(y > BORDER_DOWN)
 				return true;
 		}
@@ -195,9 +196,9 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 	private boolean tetrominoOutOfBoundsRightLeftOrOverlapping(){
 		boolean result = false;
-		for(Block block : currentTetromino.blocks){
-			int x = block.coordinates.x;
-			int y = block.coordinates.y;
+		for(Block block : currentTetromino.getBlocks()){
+			int x = block.getCoordinates().x;
+			int y = block.getCoordinates().y;
 			if(x < BORDER_LEFT || x > BORDER_RIGHT)
 				result = true;
 			else if(lockedBlocks[x][y]!=null)
@@ -231,8 +232,8 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private void correctIfOutOfBounds() {
-		for(Block block : currentTetromino.blocks){
-			int x = block.coordinates.x;
+		for(Block block : currentTetromino.getBlocks()){
+			int x = block.getCoordinates().x;
 			if(x < BORDER_LEFT)
 				currentTetromino.moveRight();
 			else if(x > BORDER_RIGHT)
@@ -241,13 +242,16 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private void lockInBlock(Block b) {
-		int x = b.coordinates.x;
-		int y = b.coordinates.y;
-		lockedBlocks[x][y] = b;
+		int x = b.getCoordinates().x;
+		int y = b.getCoordinates().y;
+		if(lockedBlocks[x][y]==null)
+			lockedBlocks[x][y] = b;
+		else
+			System.out.println("fuck");
 	}
 
 	private void lockInTetrominoBlocks(){
-		for(Block block : currentTetromino.blocks){
+		for(Block block : currentTetromino.getBlocks()){
 			lockInBlock(block);
 		}
 	}
@@ -320,20 +324,18 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	}
 
 	private void drawBlocks(Graphics g) {
-		for(Block block : currentTetromino.blocks){
-			g.drawImage(block.image, block.coordinates.x*DIMENSION, block.coordinates.y*DIMENSION, this);
-		}
+		for(Block block : currentTetromino.getBlocks())
+			block.draw(g, this);
 	    
 	    for(int x = 0; x < 10; x++) {
 	    	for(int y = 0; y < 20; y++) {
-	    		Block b = lockedBlocks[x][y];
-	    		if(b != null)
-	    			g.drawImage(b.image, b.coordinates.x*DIMENSION, b.coordinates.y*DIMENSION, this);
+	    		Block block = lockedBlocks[x][y];
+	    		if(block != null)
+					block.draw(g, this);
 	    	}
 	    }
 	}
 
-	
 	@Override
 	public void run() {
 		
@@ -378,39 +380,48 @@ public class GameField extends JPanel implements Runnable, KeyListener{
                     JOptionPane.ERROR_MESSAGE);
             }
 
-            if(tetrominoCanMoveDown())
-            	currentTetromino.moveDown();
-            else {
-				lockInTetrominoBlocks();
-				checkAllRowsAndDeleteFull();
-            	if (canPlay())
-					spawnTetromino();
-				else
-					isPlaying = false;
-			}
-
-            repaint();
+            if(!tetrominoOutOfBoundsRightLeftOrOverlapping()&&!tetrominoOutOfBoundsDown())
+            	animate();
             
             beforeTime = System.currentTimeMillis();
         }
 	}
 
+	private void animate(){
+		isInteractive = false;
+		if(tetrominoCanMoveDown())
+			currentTetromino.moveDown();
+		else {
+			lockInTetrominoBlocks();
+			checkAllRowsAndDeleteFull();
+			if (canPlay())
+				spawnTetromino();
+			else
+				isPlaying = false;
+		}
+
+		repaint();
+		isInteractive = true;
+	}
+
 	public void pause() {
 		// you may want to throw an IllegalStateException if !running
 		isPaused = true;
+		isInteractive = false;
 	}
 
 	public void resume() {
 		synchronized (pauseLock) {
 			isPaused = false;
 			pauseLock.notifyAll(); // Unblocks thread
+			isInteractive = true;
 		}
 	}
 
 	@Override
 	public void keyPressed(KeyEvent e) {
 		int keyCode = e.getKeyCode();
-		if(isPlaying) {
+		if(isPlaying && isInteractive) {
 			if( keyCode == KeyEvent.VK_RIGHT && tetrominoCanMoveRight()) {
 	            currentTetromino.moveRight();
 	    		repaint();
