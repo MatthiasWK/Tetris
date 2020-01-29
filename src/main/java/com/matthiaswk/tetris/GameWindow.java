@@ -7,10 +7,10 @@ import java.awt.*;
 public class GameWindow extends JFrame{
 	
 	public GameWindow() {
-		InitUI();
+		initUI();
 	}
 	
-	private void InitUI() {
+	private void initUI() {
 		GameField gf = new GameField();
 		add(gf);
 

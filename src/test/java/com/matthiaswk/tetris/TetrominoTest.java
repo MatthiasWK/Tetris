@@ -19,9 +19,7 @@ class TetrominoTest {
 
     @Test
     void rotateRL() {
-        Point[] oldCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l1 = new ArrayList<>();
-        Collections.addAll(l1, oldCoords);
+        ArrayList<Point> oldCoords = coordsAsList();
 
         printCoords();
         tetromino.rotateRight();
@@ -29,12 +27,69 @@ class TetrominoTest {
         tetromino.rotateLeft();
         printCoords();
 
-        Point[] newCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l2 = new ArrayList<>();
-        Collections.addAll(l2, newCoords);
+        ArrayList<Point> newCoords = coordsAsList();
 
-        for(Point p : l1)
-            assertTrue(l2.contains(p));
+        assertTrue(newCoords.containsAll(oldCoords));
+    }
+
+    @Test
+    void rotateLR() {
+        ArrayList<Point> oldCoords = coordsAsList();
+
+        printCoords();
+        tetromino.rotateLeft();
+        printCoords();
+        tetromino.rotateRight();
+        printCoords();
+
+        ArrayList<Point> newCoords = coordsAsList();
+
+        assertTrue(newCoords.containsAll(oldCoords));
+    }
+
+    @Test
+    void rotateRRRR() {
+        ArrayList<Point> oldCoords = coordsAsList();
+
+        printCoords();
+        tetromino.rotateRight();
+        printCoords();
+        tetromino.rotateRight();
+        printCoords();
+        tetromino.rotateRight();
+        printCoords();
+        tetromino.rotateRight();
+        printCoords();
+
+        ArrayList<Point> newCoords = coordsAsList();
+
+        assertTrue(newCoords.containsAll(oldCoords));
+    }
+
+    @Test
+    void rotateLLLL() {
+        ArrayList<Point> oldCoords = coordsAsList();
+
+        printCoords();
+        tetromino.rotateLeft();
+        printCoords();
+        tetromino.rotateLeft();
+        printCoords();
+        tetromino.rotateLeft();
+        printCoords();
+        tetromino.rotateLeft();
+        printCoords();
+
+        ArrayList<Point> newCoords = coordsAsList();
+
+        assertTrue(newCoords.containsAll(oldCoords));
+    }
+
+    private ArrayList<Point> coordsAsList(){
+        Point[] coords = tetromino.getBlockCoordinates();
+        ArrayList<Point> list = new ArrayList<>();
+        Collections.addAll(list, coords);
+        return list;
     }
 
     private void printCoords(){
@@ -45,73 +100,5 @@ class TetrominoTest {
         }
 
         System.out.println(")");
-    }
-
-    @Test
-    void rotateLR() {
-        Point[] oldCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l1 = new ArrayList<>();
-        Collections.addAll(l1, oldCoords);
-
-        printCoords();
-        tetromino.rotateLeft();
-        printCoords();
-        tetromino.rotateRight();
-        printCoords();
-
-        Point[] newCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l2 = new ArrayList<>();
-        Collections.addAll(l2, newCoords);
-
-        for(Point p : l1)
-            assertTrue(l2.contains(p));
-    }
-
-    @Test
-    void rotateRRRR() {
-        Point[] oldCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l1 = new ArrayList<>();
-        Collections.addAll(l1, oldCoords);
-
-        printCoords();
-        tetromino.rotateRight();
-        printCoords();
-        tetromino.rotateRight();
-        printCoords();
-        tetromino.rotateRight();
-        printCoords();
-        tetromino.rotateRight();
-        printCoords();
-
-        Point[] newCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l2 = new ArrayList<>();
-        Collections.addAll(l2, newCoords);
-
-        for(Point p : l1)
-            assertTrue(l2.contains(p));
-    }
-
-    @Test
-    void rotateLLLL() {
-        Point[] oldCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l1 = new ArrayList<>();
-        Collections.addAll(l1, oldCoords);
-
-        printCoords();
-        tetromino.rotateLeft();
-        printCoords();
-        tetromino.rotateLeft();
-        printCoords();
-        tetromino.rotateLeft();
-        printCoords();
-        tetromino.rotateLeft();
-        printCoords();
-
-        Point[] newCoords = tetromino.getBlockCoordinates();
-        ArrayList<Point> l2 = new ArrayList<>();
-        Collections.addAll(l2, newCoords);
-
-        for(Point p : l1)
-            assertTrue(l2.contains(p));
     }
 }

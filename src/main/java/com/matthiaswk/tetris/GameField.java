@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 @SuppressWarnings("serial")
 public class GameField extends JPanel implements Runnable, KeyListener{
@@ -14,58 +16,47 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	private final int BORDER_LEFT=0;
 	private final int BORDER_RIGHT=9;
 	private final int REGULAR_DELAY = 500;
-	private final int FAST_DELAY = 100;
-
-    private int delay = REGULAR_DELAY;
-    
-    private boolean isPlaying;
-	private boolean isPaused;
-	private boolean isPressed;
-	private boolean isInteractive = true;
+	private final int SHORT_DELAY = 100;
 	private final Object pauseLock = new Object();
+	private final Object animateLock = new Object();
+	private long beforeTime = System.currentTimeMillis();
+    private int delay = REGULAR_DELAY;
+	private boolean isPaused = false;
+	private boolean isPressed = false;
+    private boolean isPlaying = true;
+	private boolean isInteractive = true;
     private Thread animator;
-	private Block currentBlock;
 	private Tetromino currentTetromino;
 	private Block[][] lockedBlocks;
 	
 	GameField(){
-		InitField();
+		initField();
+		initBlocks();
 		spawnTetromino();
 	}
 
-	private void InitField() {
+	private void initField() {
 		setBackground(Color.LIGHT_GRAY);
 		setPreferredSize(new Dimension(WIDTH, HEIGHT));
-		lockedBlocks = new Block[10][20];
-		isPlaying = true;
-		isPaused = false;
 	}
 
-	private boolean canPlay() {
+	private void initBlocks(){
+		lockedBlocks = new Block[10][20];
+		for(Block[] row : lockedBlocks)
+			Arrays.fill(row, new Block());
+	}
+
+	private boolean canPlay() {//TODO: adjust loose-condition
 		for(int x=0; x<10; x++) {
-			if (lockedBlocks[x][0]!=null)
+			if (!lockedBlocks[x][0].isEmpty())
 				return false;
 		}
 		return true;
 	}
 
-	private void spawnTetromino() {
-		Tetromino t = new Tetromino(DIMENSION);
+	private void spawnTetromino() {//TODO: adjust I-Tetromino spawn
+		Tetromino t = new Tetromino(DIMENSION, Tetromino.TetrominoShape.getRandomShape());
 		currentTetromino = t;
-	}
-
-	private void addBlock() {
-		Block b = new Block(new Point(4, 0), DIMENSION, Block.BlockColor.getRandomColor());
-		currentBlock = b;
-	}	
-	
-	private boolean canMoveDown() {
-		int x = currentBlock.getCoordinates().x;
-		int y = currentBlock.getCoordinates().y;
-		if(y < BORDER_DOWN && lockedBlocks[x][y+1] == null)
-			return true;
-		else
-			return false;
 	}
 
 	private boolean tetrominoCanMoveDown() {
@@ -95,7 +86,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	private boolean canMoveDown(Block block) {
 		int x = block.getCoordinates().x;
 		int y = block.getCoordinates().y;
-		if(y < BORDER_DOWN && lockedBlocks[x][y+1] == null)
+		if(y < BORDER_DOWN && lockedBlocks[x][y+1].isEmpty())
 			return true;
 		else
 			return false;
@@ -104,7 +95,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	private boolean canMoveRight(Block block) {
 		int x = block.getCoordinates().x;
 		int y = block.getCoordinates().y;
-		if(x < BORDER_LEFT || (x < BORDER_RIGHT && lockedBlocks[x+1][y] == null))
+		if(x < BORDER_LEFT || (x < BORDER_RIGHT && lockedBlocks[x+1][y].isEmpty()))
 			return true;
 		else
 			return false;
@@ -113,12 +104,12 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	private boolean canMoveLeft(Block block) {
 		int x = block.getCoordinates().x;
 		int y = block.getCoordinates().y;
-		if( x > BORDER_RIGHT || (x > BORDER_LEFT && lockedBlocks[x-1][y] == null))
+		if( x > BORDER_RIGHT || (x > BORDER_LEFT && lockedBlocks[x-1][y].isEmpty()))
 			return true;
 		else
 			return false;
 	}
-	//TODO change to test before rotating
+
 	private void tryRotatingTetrominoRight(){
 		currentTetromino.rotateRight();
 
@@ -152,7 +143,6 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 		}
 	}
 
-	//TODO change to test before rotating
 	private void tryRotatingTetrominoLeft(){
 		currentTetromino.rotateLeft();
 
@@ -194,35 +184,17 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 		}
 		return false;
 	}
+
 	private boolean tetrominoOutOfBoundsRightLeftOrOverlapping(){
-		boolean result = false;
 		for(Block block : currentTetromino.getBlocks()){
 			int x = block.getCoordinates().x;
 			int y = block.getCoordinates().y;
 			if(x < BORDER_LEFT || x > BORDER_RIGHT)
-				result = true;
-			else if(lockedBlocks[x][y]!=null)
-				result = true;
+				return true;
+			else if(!lockedBlocks[x][y].isEmpty())
+				return true;
 		}
-		return result;
-	}
-
-	private boolean tetrominoCanRotateRight() {
-		for (int blockIndex = 0; blockIndex < 4; blockIndex++){
-			Point rotatedCoords = currentTetromino.rotatedRightCoordinates(blockIndex);
-			if(lockedBlocks[rotatedCoords.x][rotatedCoords.y]!=null)
-				return false;
-		}
-		return true;
-	}
-
-	private boolean tetrominoCanRotateLeft() {
-		for (int blockIndex = 0; blockIndex < 4; blockIndex++){
-			Point rotatedCoords = currentTetromino.rotatedLeftCoordinates(blockIndex);
-			if(lockedBlocks[rotatedCoords.x][rotatedCoords.y]!=null)
-				return false;
-		}
-		return true;
+		return false;
 	}
 
 	private void moveTetrominoAllTheWayDown() {
@@ -231,23 +203,13 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 		}
 	}
 
-	private void correctIfOutOfBounds() {
-		for(Block block : currentTetromino.getBlocks()){
-			int x = block.getCoordinates().x;
-			if(x < BORDER_LEFT)
-				currentTetromino.moveRight();
-			else if(x > BORDER_RIGHT)
-				currentTetromino.moveLeft();
-		}
-	}
-
 	private void lockInBlock(Block b) {
 		int x = b.getCoordinates().x;
 		int y = b.getCoordinates().y;
-		if(lockedBlocks[x][y]==null)
+		if(lockedBlocks[x][y].isEmpty())
 			lockedBlocks[x][y] = b;
 		else
-			System.out.println("fuck");
+			System.out.println("Blocks are overlapping!");
 	}
 
 	private void lockInTetrominoBlocks(){
@@ -255,27 +217,41 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 			lockInBlock(block);
 		}
 	}
-	
+
 	private void checkAllRowsAndDeleteFull() {
-		for(int row = BORDER_DOWN; row >0; row--) {
-			while(rowIsFull(row)){
-				deleteRow(row);
-				collapseRowsAbove(row);
+		ArrayList<Integer> fullRows = new ArrayList<Integer>();
+		int topRow = BORDER_DOWN;
+		int bottomRow = 0;
+		for(int row = BORDER_DOWN; row > 0; row--) {
+			if(rowIsFull(row)){
+				fullRows.add(row);
+				topRow = row;
+				bottomRow = Math.max(bottomRow, row);
 			}
 		}
+		if(!fullRows.isEmpty()){
+			waitBeforeAnimating(); //short pause to be replaced by an animation in the future
+			deleteRows(fullRows);
+			collapseRowsAbove(topRow, bottomRow);
+		}
 	}
-	
+
 	private boolean rowIsFull(int row) {
 		for(int x=0; x<10; x++) {
-			if (lockedBlocks[x][row]==null)
+			if (lockedBlocks[x][row].isEmpty())
 				return false;
 		}
 		return true;
 	}
+
+	private void deleteRows(ArrayList<Integer> fullRows) {
+		for(int row : fullRows)
+			deleteRow(row);
+	}
 	
 	private void deleteRow(int row) {
 		for(int x=0; x<10; x++) {
-			lockedBlocks[x][row] = null;
+			lockedBlocks[x][row] = new Block();
 		}
 	}
 	
@@ -285,7 +261,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 //		for(int x=0; x<10; x++) {
 //			s+="[";
 //			for(int y=0; y<20; y++) {
-//				if (lockedBlocks[x][y]==null)
+//				if (lockedBlocks[x][y].isEmpty())
 //					s+="0,";
 //				else
 //					s+="1,";
@@ -295,14 +271,15 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 //		s+="]";
 //		System.out.println(s);
 //	}
+	private void collapseRowsAbove(int topRow, int bottomRow) {
+		int numMoves = bottomRow - topRow + 1;
 
-	private void collapseRowsAbove(int row) {
-		for(int y=row-1; y>=0; y--){
+		for(int y=topRow-1; y>0; y--){
 			for(int x=0; x <= BORDER_RIGHT; x++) {
 				Block block = lockedBlocks[x][y];
-				if(block!=null) {
-					lockedBlocks[x][y]=null;
-					block.moveDown();
+				if(!block.isEmpty()) {
+					lockedBlocks[x][y] = new Block();
+					block.moveDown(numMoves);
 					lockInBlock(block);
 				}
 			}
@@ -330,7 +307,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 	    for(int x = 0; x < 10; x++) {
 	    	for(int y = 0; y < 20; y++) {
 	    		Block block = lockedBlocks[x][y];
-	    		if(block != null)
+	    		if(!block.isEmpty())
 					block.draw(g, this);
 	    	}
 	    }
@@ -338,12 +315,7 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 
 	@Override
 	public void run() {
-		
-		long beforeTime, timeDiff, sleep;
-
-        beforeTime = System.currentTimeMillis();
-
-        while (isPlaying) {
+		while (isPlaying) {
 
 			synchronized (pauseLock) {// Handle pausing
 				if (!isPlaying) {
@@ -354,7 +326,8 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 						synchronized (pauseLock) {
 							pauseLock.wait();
 						}
-					} catch (InterruptedException ex) {
+					} catch (InterruptedException e) {
+						System.out.println(String.format("Thread interrupted: %s", e.getMessage()));
 						break;
 					}
 					if (!isPlaying) {
@@ -363,32 +336,36 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 				}
 			}
 
-            timeDiff = System.currentTimeMillis() - beforeTime;
-            sleep = delay - timeDiff;
-
-            if (sleep < 0) {
-                sleep = 2;
-            }
-
-            try {
-                Thread.sleep(sleep);
-            } catch (InterruptedException e) {
-                
-                String msg = String.format("Thread interrupted: %s", e.getMessage());
-                
-                JOptionPane.showMessageDialog(this, msg, "Error", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
-
-            if(!tetrominoOutOfBoundsRightLeftOrOverlapping()&&!tetrominoOutOfBoundsDown())
-            	animate();
-            
-            beforeTime = System.currentTimeMillis();
+			waitBeforeAnimating();
+            animate();
         }
+	}
+
+	private void waitBeforeAnimating(){
+		waitBeforeAnimating(this.delay);
+	}
+
+	private void waitBeforeAnimating(int delay){
+		long timeDiff = System.currentTimeMillis() - beforeTime;
+		long sleep = delay - timeDiff;
+
+		if (sleep < 0) {
+			sleep = 2;
+		}
+		synchronized (animateLock){
+			try {
+				animateLock.wait(sleep);
+			} catch (InterruptedException e) {
+				System.out.println(String.format("Thread interrupted: %s", e.getMessage()));
+			}
+		}
+
+		beforeTime = System.currentTimeMillis();
 	}
 
 	private void animate(){
 		isInteractive = false;
+
 		if(tetrominoCanMoveDown())
 			currentTetromino.moveDown();
 		else {
@@ -404,13 +381,12 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 		isInteractive = true;
 	}
 
-	public void pause() {
-		// you may want to throw an IllegalStateException if !running
+	private void pause() {
 		isPaused = true;
 		isInteractive = false;
 	}
 
-	public void resume() {
+	private void resume() {
 		synchronized (pauseLock) {
 			isPaused = false;
 			pauseLock.notifyAll(); // Unblocks thread
@@ -434,9 +410,12 @@ public class GameField extends JPanel implements Runnable, KeyListener{
 				isPressed = true;
 				moveTetrominoAllTheWayDown();
 				repaint();
+				synchronized (animateLock){
+					animateLock.notifyAll();
+				}
 			}
 			else if( keyCode == KeyEvent.VK_DOWN) {
-				delay=FAST_DELAY;
+				delay= SHORT_DELAY;
 			}
 			else if( keyCode == KeyEvent.VK_D && !currentTetromino.isOShape() && !isPressed) {
 				isPressed = true;

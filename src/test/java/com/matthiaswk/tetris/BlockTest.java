@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class BlockTest {
     Block block;
 
-
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         block = new Block(new Point(0,0),30, Block.BlockColor.BLUE);

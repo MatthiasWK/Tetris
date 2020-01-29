@@ -11,12 +11,11 @@ public class Block{
 	private BlockColor blockColor;
 
 	public enum BlockColor{
-		LIGHTBLUE, YELLOW, PINK, BLUE, ORANGE, GREEN, RED;
-		
-		public static BlockColor getRandomColor() {
-            Random random = new Random();
-            return values()[random.nextInt(values().length)];
-        }
+		LIGHTBLUE, YELLOW, PINK, BLUE, ORANGE, GREEN, RED, EMPTY
+	}
+
+	Block(){
+		this.blockColor = BlockColor.EMPTY;
 	}
 
 	Block(Point coordinates, int dimension, BlockColor blockColor){
@@ -35,36 +34,8 @@ public class Block{
 		coordinates = newCoords;
 	}
 
-	private void loadImage()
-	{		
-		Toolkit t = Toolkit.getDefaultToolkit();
-		Image temp;
-		switch(blockColor) {
-			case LIGHTBLUE:
-				temp = t.getImage(getClass().getResource("/block_lightblue.png"));
-				break;
-			case YELLOW:
-				temp = t.getImage(getClass().getResource("/block_yellow.png"));
-				break;
-			case PINK:
-				temp = t.getImage(getClass().getResource("/block_pink.png"));
-				break;
-			case BLUE:
-		    	temp = t.getImage(getClass().getResource("/block_blue.png"));
-		    	break;
-			case ORANGE:
-				temp = t.getImage(getClass().getResource("/block_orange.png"));
-				break;
-			case GREEN:
-		    	temp = t.getImage(getClass().getResource("/block_green.png"));
-		    	break;
-			case RED:
-				temp = t.getImage(getClass().getResource("/block_red.png"));
-				break;
-			default:
-				throw new IllegalStateException("Unexpected value: " + blockColor);
-		}
-	    image = temp.getScaledInstance(dimension, dimension, Image.SCALE_DEFAULT);
+	public boolean isEmpty(){
+		return blockColor.equals(BlockColor.EMPTY);
 	}
 
 	public void draw(Graphics g, GameField field){
@@ -72,8 +43,12 @@ public class Block{
 	}
 
 	public void moveDown() {
+		moveDown(1);
+	}
+
+	public void moveDown(int numMoves) {
 		int x = coordinates.x;
-		int newY = coordinates.y + 1;
+		int newY = coordinates.y + numMoves;
 		coordinates = new Point(x, newY);
 	}
 	
@@ -87,5 +62,37 @@ public class Block{
 		int newX = coordinates.x - 1;
 		int y = coordinates.y;
 		coordinates = new Point(newX, y);
+	}
+
+	private void loadImage()
+	{
+		Toolkit t = Toolkit.getDefaultToolkit();
+		Image temp;
+		switch(blockColor) {
+			case LIGHTBLUE:
+				temp = t.getImage(getClass().getResource("/block_lightblue.png"));
+				break;
+			case YELLOW:
+				temp = t.getImage(getClass().getResource("/block_yellow.png"));
+				break;
+			case PINK:
+				temp = t.getImage(getClass().getResource("/block_pink.png"));
+				break;
+			case BLUE:
+				temp = t.getImage(getClass().getResource("/block_blue.png"));
+				break;
+			case ORANGE:
+				temp = t.getImage(getClass().getResource("/block_orange.png"));
+				break;
+			case GREEN:
+				temp = t.getImage(getClass().getResource("/block_green.png"));
+				break;
+			case RED:
+				temp = t.getImage(getClass().getResource("/block_red.png"));
+				break;
+			default:
+				throw new IllegalStateException("Unexpected value: " + blockColor);
+		}
+		image = temp.getScaledInstance(dimension, dimension, Image.SCALE_DEFAULT);
 	}
 }
